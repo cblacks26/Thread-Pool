@@ -21,12 +21,14 @@ public class ThreadPoolManager{
 	public void addTask(Task t) {
 		synchronized(tasks) {
 			tasks.add(t);
+			System.out.println("Tasks: "+tasks.size());
 		}
 	}
 
 	public void addWorkerThread(WorkerThread wt) {
 		synchronized(workers) {
 			workers.add(wt);
+			System.out.println("Workers: "+workers.size());
 		}
 	}
 	
@@ -35,28 +37,28 @@ public class ThreadPoolManager{
 			WorkerThread worker = WorkerThread.createInstance(this);
 			Thread t = new Thread(worker);
 			t.start();
-			workers.add(worker);
+			addWorkerThread(worker);
 		}
 	}
 	
 	public void managePool() {
 		running = true;
 		while(running) {
-			synchronized(tasks) {
-				if(!tasks.isEmpty()) {
-					synchronized(workers) {
-						if(!workers.isEmpty()) {
-							workers.removeFirst().setTask(tasks.removeFirst());
-							// commit a worker thread for a class
-						}else {
-							continue;
-						}
+			if(!tasks.isEmpty()) {
+				synchronized(workers) {
+					if(!workers.isEmpty()) {
+						System.out.println("Designating worker thread to task");
+						WorkerThread worker = workers.removeFirst();
+						worker.setTask(tasks.removeFirst());
+						worker.notify();
+						// commit a worker thread for a class
+					}else {
+						continue;
 					}
-				}else {
-					continue;
 				}
+			}else {
+				continue;
 			}
 		}
 	}
-	
 }

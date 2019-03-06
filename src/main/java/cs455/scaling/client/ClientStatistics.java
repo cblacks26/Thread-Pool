@@ -33,7 +33,7 @@ public class ClientStatistics implements Runnable{
 			}
 			int msgRec = messagesRecieved.get();
 			int msgSent = messagesSent.get();
-			System.out.println(System.currentTimeMillis()+"/t Total Sent Count: "+msgSent+"/t Total Recieved Count: "+msgRec);
+			System.out.println(System.currentTimeMillis()+"\t Total Sent Count: "+msgSent+"\t Total Recieved Count: "+msgRec);
 			resetMessages();
 		}
 	}

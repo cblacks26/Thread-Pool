@@ -35,7 +35,7 @@ public class Client {
 		ClientStatistics stats = new ClientStatistics();
 		Thread statsThread = new Thread(stats);
 		statsThread.start();
-		SenderThread sender = SenderThread.createInstance(new DataOutputStream(socket.getOutputStream()),stats);
+		SenderThread sender = SenderThread.createInstance(new DataOutputStream(socket.getOutputStream()),stats,messageRate);
 		Thread senderThread = new Thread(sender);
 		senderThread.start();
 	}

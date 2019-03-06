@@ -1,9 +1,5 @@
 package cs455.scaling.server;
 
-import java.security.NoSuchAlgorithmException;
-
-import cs455.scaling.util.Helper;
-
 public class WorkerThread implements Runnable{
 
 	private boolean running = false;
@@ -23,18 +19,17 @@ public class WorkerThread implements Runnable{
 	public void run() {
 		running = true;
 		while(running) {
-			if(currentTask == null) continue;
-			else {
-				synchronized(currentTask) {
-					try {
-						String hash = Helper.SHA1FromBytes(currentTask.getData());
-						currentTask.setHash(hash);
-						currentTask.sendHash();
-						finishedTask();
-					} catch (NoSuchAlgorithmException e) {
-						e.printStackTrace();
-					}
+			synchronized(this) {
+				try {
+					wait();
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
 				}
+			}
+			System.out.println("Thread woken up");
+			synchronized(currentTask) {
+				currentTask.completeTask();
+				finishedTask();
 			}
 		}
 	}
@@ -46,6 +41,7 @@ public class WorkerThread implements Runnable{
 	}
 	
 	private void finishedTask() {
+		System.out.println("Finished task");
 		currentTask = null;
 		manager.addWorkerThread(this);
 	}

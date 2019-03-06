@@ -17,6 +17,7 @@ public class Server {
 		int batchTime = Integer.parseInt(args[3]);
 		Server server = new Server();
 		server.initialize(port, poolSize, batchSize, batchTime);
+		server.getThreadPoolManager().managePool();
 	}
 	
 	public void initialize(int port, int poolSize, int batchSize, int batchTime) {
@@ -25,7 +26,7 @@ public class Server {
 			Thread t2 = new Thread(communication);
 			t2.start();
 		} catch (IOException e) {
-			System.out.println("IOEcpetion creating new COmmunicationThread: "+e.getStackTrace());
+			System.out.println("IOEcpetion creating new CommunicationThread: "+e.getStackTrace());
 		}
 		manager = ThreadPoolManager.createInstance(poolSize);
 	}
