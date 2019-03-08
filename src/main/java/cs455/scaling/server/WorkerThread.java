@@ -1,5 +1,8 @@
 package cs455.scaling.server;
 
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 public class WorkerThread implements Runnable{
 
 	private boolean running = false;
@@ -22,26 +25,24 @@ public class WorkerThread implements Runnable{
 			synchronized(this) {
 				try {
 					wait();
+					currentTask.completeTask();
+					finishedTask();
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
+				} catch (NoSuchAlgorithmException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			}
-			System.out.println("Thread woken up");
-			synchronized(currentTask) {
-				currentTask.completeTask();
-				finishedTask();
 			}
 		}
 	}
 	
-	public void setTask(Task t) {
-		synchronized(currentTask) {
-			currentTask = t;
-		}
+	public synchronized void setTask(Task t) {
+		currentTask = t;
 	}
 	
 	private void finishedTask() {
-		System.out.println("Finished task");
 		currentTask = null;
 		manager.addWorkerThread(this);
 	}

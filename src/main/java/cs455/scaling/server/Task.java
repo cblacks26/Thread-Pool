@@ -12,15 +12,15 @@ import cs455.scaling.util.Helper;
 
 public class Task {
 
-	private static ServerSocketChannel serverSocket;
+	private static ServerStatistics stats;
 	private static Selector selector;
 	private byte[] data;
 	private int type;
 	private SelectionKey key;
 
-	public static void initialize(ServerSocketChannel socket, Selector select) {
-		serverSocket = socket;
+	public static void initialize(Selector select, ServerStatistics serverStats) {
 		selector = select;
+		stats = serverStats;
 	}
 	
 	private Task(int type, SelectionKey key) {
@@ -29,56 +29,48 @@ public class Task {
 	}
 	
 	public static Task createInstance(int type, SelectionKey key) {
-		key.attach(new Object());
+		synchronized(key) {
+			key.attach(new Object());
+		}
 		Task t = new Task(type, key);
 		return t;
 	}
 	
-	public void completeTask() {
+	public void completeTask() throws IOException, NoSuchAlgorithmException {
 		if(type==1) {
 			ByteBuffer buffer = ByteBuffer.allocate(8000);
 			SocketChannel socket = (SocketChannel)key.channel();
-			try {
-				socket.read(buffer);
-				this.data = buffer.array();
-				computeAndSend();
-			} catch (IOException e) {
-				System.out.println("IOException read from socket in CommunicationThread: "+e.getStackTrace());
-			}
-			key.attach(null);
+			socket.read(buffer);
+			this.data = buffer.array();
+			stats.addMessagesRecieved(1);
+			String hash = Helper.SHA1FromBytes(data);
+			buffer = ByteBuffer.wrap(hash.getBytes());
+			socket.write(buffer);
+			buffer.clear();
+			stats.addMessagesSent(1);
 		}else {
 			acceptConnection();
 		}
-	}
-	
-	private void computeAndSend() {
-		try {
-			String hash = Helper.SHA1FromBytes(data);
-			sendHash(hash);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+		synchronized(key) {
+			key.attach(null);
 		}
-	}
-	
-	private void sendHash(String hash) {
-		SocketChannel channel = (SocketChannel) key.channel();
-		ByteBuffer buffer = ByteBuffer.wrap(hash.getBytes());
-		try {
-			channel.write(buffer);
-			buffer.clear();
-		} catch (IOException e) {
-			System.out.println("IOException sending hash back to client: "+ e.getStackTrace());
-		}
-		key.attach(null);
 	}
 	
 	private void acceptConnection() {
-		try {
-			SocketChannel socket = serverSocket.accept();
-			socket.configureBlocking(false);
-			socket.register(selector, SelectionKey.OP_READ);
-		} catch (IOException e) {
-			System.out.println("IOException in CommunicationThread accepting a socket: "+e.getStackTrace());
+		synchronized(key) {
+			try {
+				ServerSocketChannel channel = (ServerSocketChannel) key.channel();
+				SocketChannel socket = channel.accept();
+				if(socket!=null) {
+					socket.configureBlocking(false);
+					selector.wakeup();
+					socket.register(selector, SelectionKey.OP_READ);
+					stats.addConnections(1);
+				}
+			} catch (IOException e) {
+				System.out.println("IOException in CommunicationThread accepting a socket: "+e.getStackTrace());
+			}
 		}
+		
 	}
 }

@@ -49,6 +49,7 @@ public class ServerStatistics implements Runnable{
 			out+=std+" messages/s";
 			// need per connection info to compute this
 			System.out.println(out);
+			resetMessages();
 		}
 	}
 }

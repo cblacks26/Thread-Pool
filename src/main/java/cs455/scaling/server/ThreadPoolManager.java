@@ -1,6 +1,10 @@
 package cs455.scaling.server;
 
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.LinkedList;
+
+import cs455.scaling.client.Client;
 
 public class ThreadPoolManager{
 
@@ -18,18 +22,12 @@ public class ThreadPoolManager{
 		return manager;
 	}
 	
-	public void addTask(Task t) {
-		synchronized(tasks) {
-			tasks.add(t);
-			System.out.println("Tasks: "+tasks.size());
-		}
+	public synchronized void addTask(Task t) {
+		tasks.add(t);
 	}
 
 	public void addWorkerThread(WorkerThread wt) {
-		synchronized(workers) {
-			workers.add(wt);
-			System.out.println("Workers: "+workers.size());
-		}
+		workers.add(wt);
 	}
 	
 	private void createThreads(int numThreads) {
@@ -44,21 +42,29 @@ public class ThreadPoolManager{
 	public void managePool() {
 		running = true;
 		while(running) {
-			if(!tasks.isEmpty()) {
-				synchronized(workers) {
+			synchronized(this){
+				if(!tasks.isEmpty()) {
 					if(!workers.isEmpty()) {
-						System.out.println("Designating worker thread to task");
 						WorkerThread worker = workers.removeFirst();
 						worker.setTask(tasks.removeFirst());
-						worker.notify();
-						// commit a worker thread for a class
+						synchronized(worker) {
+							worker.notify();
+						}
 					}else {
 						continue;
 					}
+				}else {
+					continue;
 				}
-			}else {
-				continue;
 			}
 		}
+	}
+	
+	public static void main(String[] args) throws UnknownHostException, IOException {
+		Server server = new Server();
+		server.initialize(5001, 10, 1, 1);
+		Client client = new Client();
+		client.initialize("localhost", 5001, 1);
+		server.getThreadPoolManager().managePool();
 	}
 }

@@ -6,6 +6,7 @@ public class Server {
 
 	private CommunicationThread communication;
 	private ThreadPoolManager manager;
+	private ServerStatistics stats;
 	
 	public static void main(String[] args) {
 		if(args.length!=4) {
@@ -17,11 +18,15 @@ public class Server {
 		int batchTime = Integer.parseInt(args[3]);
 		Server server = new Server();
 		server.initialize(port, poolSize, batchSize, batchTime);
+		System.out.println("Managing pool");
 		server.getThreadPoolManager().managePool();
 	}
 	
 	public void initialize(int port, int poolSize, int batchSize, int batchTime) {
 		try {
+			stats = new ServerStatistics();
+			Thread t3 = new Thread(stats);
+			t3.start();
 			communication = CommunicationThread.createInstance(this,port);
 			Thread t2 = new Thread(communication);
 			t2.start();
@@ -37,6 +42,10 @@ public class Server {
 	
 	public ThreadPoolManager getThreadPoolManager() {
 		return manager;
+	}
+	
+	public ServerStatistics getServerStats() {
+		return stats;
 	}
 	
 }

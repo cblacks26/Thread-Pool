@@ -19,18 +19,17 @@ public class CommunicationThread implements Runnable{
 		this.server = server;
 		selector = Selector.open();
 		serverSocket = ServerSocketChannel.open();
-		serverSocket.bind(new InetSocketAddress("localhost", port));
+		serverSocket.bind(new InetSocketAddress(port));
 		serverSocket.configureBlocking(false);
 		serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 	}
 	
 	public static CommunicationThread createInstance(Server server, int port) throws IOException {
 		CommunicationThread ct = new CommunicationThread(server,port);
-		Task.initialize(ct.serverSocket, ct.selector);
+		Task.initialize(ct.selector, server.getServerStats());
 		return ct;
 	}
 	
-	// Have to check if need to synchronize connections as well
 	@Override
 	public void run() {
 		running = true;
@@ -44,19 +43,19 @@ public class CommunicationThread implements Runnable{
 			Iterator<SelectionKey> it = keys.iterator();
 			while(it.hasNext()) {
 				SelectionKey key = it.next();
-				if(!key.isValid()) {
-					continue;
-				}
-				
-				if(key.isAcceptable()&&key.attachment()==null) {
-					server.getThreadPoolManager().addTask(Task.createInstance(2,key));
-				}
-				
-				if(key.isReadable()&&key.attachment()==null) {
-					System.out.println("Recieved a readable");
-					server.getThreadPoolManager().addTask(Task.createInstance(1,key));
-				}
 				it.remove();
+				synchronized(key) {
+					if(!key.isValid()) {
+						continue;
+					}
+					if(key.isAcceptable()&&key.attachment()==null) {
+						server.getThreadPoolManager().addTask(Task.createInstance(2,key));
+					}
+					
+					if(key.isReadable()&&key.attachment()==null) {
+						server.getThreadPoolManager().addTask(Task.createInstance(1,key));
+					}
+				}
 			}
 		}
 	}

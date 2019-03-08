@@ -40,13 +40,14 @@ public class SenderThread implements Runnable{
 		running = true;
 		while(running) {
 			Random rand = new Random();
-			byte[] data = new byte[8192];
+			byte[] data = new byte[8000];
 			rand.nextBytes(data);
 			try {
 				String hash = Helper.SHA1FromBytes(data);
 				Thread.sleep(1000/messageRate);
 				dos.write(data);
 				sent.put(hash,data);
+				System.out.println("Sent hash: "+hash);
 				stats.addMessagesSent(1);
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
@@ -56,7 +57,6 @@ public class SenderThread implements Runnable{
 				e.printStackTrace();
 			}
 		}
-		
 	}
 
 }

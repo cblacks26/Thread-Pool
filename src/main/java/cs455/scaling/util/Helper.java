@@ -10,9 +10,14 @@ public class Helper {
 	
 	public static String SHA1FromBytes(byte[] data) throws NoSuchAlgorithmException {
 		MessageDigest digest = MessageDigest.getInstance("SHA1");
-		byte[] hash = digest.digest(data);
-		BigInteger hashInt = new BigInteger(1, hash);
-		return hashInt.toString(16);
+		byte[] hashBytes = digest.digest(data);
+		BigInteger hashInt = new BigInteger(1, hashBytes);
+		String hash = hashInt.toString(16);
+		while(hash.getBytes().length<40) {
+			String temp = "0"+hash;
+			hash = temp;
+		}
+		return hash;
 	}
 	
 }
