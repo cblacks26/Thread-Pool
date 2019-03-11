@@ -2,11 +2,12 @@ package cs455.scaling.server;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.LinkedList;
 
 public class WorkerThread implements Runnable{
 
 	private boolean running = false;
-	private Task currentTask = null;
+	private LinkedList<Task> queue = null;
 	private ThreadPoolManager manager;
 	
 	private WorkerThread(ThreadPoolManager tpm) {
@@ -25,8 +26,13 @@ public class WorkerThread implements Runnable{
 			synchronized(this) {
 				try {
 					wait();
-					currentTask.completeTask();
+					Task current;
+					while(queue.size()>0) {
+						 current = queue.removeFirst();
+						 current.completeTask();
+					}
 					finishedTask();
+					
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				} catch (NoSuchAlgorithmException e) {
@@ -38,12 +44,13 @@ public class WorkerThread implements Runnable{
 		}
 	}
 	
-	public synchronized void setTask(Task t) {
-		currentTask = t;
+	public synchronized void setTask(LinkedList<Task> work) {
+		queue = work;
 	}
 	
 	private void finishedTask() {
-		currentTask = null;
+		System.out.println("Finished Tasks");
+		queue = null;
 		manager.addWorkerThread(this);
 	}
 

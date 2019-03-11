@@ -1,6 +1,7 @@
 package cs455.scaling.server;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -40,14 +41,16 @@ public class Task {
 		if(type==1) {
 			ByteBuffer buffer = ByteBuffer.allocate(8000);
 			SocketChannel socket = (SocketChannel)key.channel();
+			SocketAddress address = socket.getRemoteAddress();
 			socket.read(buffer);
 			this.data = buffer.array();
-			stats.addMessagesRecieved(1);
+			stats.addMessagesRecieved(address);
 			String hash = Helper.SHA1FromBytes(data);
 			buffer = ByteBuffer.wrap(hash.getBytes());
 			socket.write(buffer);
 			buffer.clear();
-			stats.addMessagesSent(1);
+			System.out.println("Sent hash to "+address.toString());
+			stats.addMessagesSent(address,1);
 		}else {
 			acceptConnection();
 		}
@@ -65,7 +68,6 @@ public class Task {
 					socket.configureBlocking(false);
 					selector.wakeup();
 					socket.register(selector, SelectionKey.OP_READ);
-					stats.addConnections(1);
 				}
 			} catch (IOException e) {
 				System.out.println("IOException in CommunicationThread accepting a socket: "+e.getStackTrace());

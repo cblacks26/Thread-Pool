@@ -47,7 +47,6 @@ public class SenderThread implements Runnable{
 				Thread.sleep(1000/messageRate);
 				dos.write(data);
 				sent.put(hash,data);
-				System.out.println("Sent hash: "+hash);
 				stats.addMessagesSent(1);
 			} catch (NoSuchAlgorithmException e) {
 				e.printStackTrace();
