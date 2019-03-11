@@ -33,7 +33,7 @@ public class Server {
 		} catch (IOException e) {
 			System.out.println("IOEcpetion creating new CommunicationThread: "+e.getStackTrace());
 		}
-		manager = ThreadPoolManager.createInstance(poolSize);
+		manager = ThreadPoolManager.createInstance(poolSize,batchSize,batchTime);
 	}
 	
 	public CommunicationThread getCommunicationThread() {
