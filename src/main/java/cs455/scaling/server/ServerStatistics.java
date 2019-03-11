@@ -56,7 +56,6 @@ public class ServerStatistics implements Runnable{
 				double threw = sent/rec;
 				throughs.add(threw);
 			}
-			
 			double through = msgSent/msgRec;
 			double throughPerClient = through/connsNumber;
 			double std = 0.0;
