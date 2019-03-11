@@ -1,30 +1,33 @@
 package cs455.scaling.server;
 
+import java.nio.channels.SelectionKey;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerStatistics implements Runnable{
 
-	private AtomicInteger messagesRecieved = new AtomicInteger(0);
-	private AtomicInteger connections = new AtomicInteger(0);
-	private AtomicInteger messagesSent = new AtomicInteger(0);
+	private static final HashMap<SelectionKey, ConnectionStatistics> conns = new HashMap<SelectionKey, ConnectionStatistics>();
 	
-	public void addMessagesRecieved(int count) {
-		messagesRecieved.getAndAdd(count);
+	public void addMessagesRecieved(SelectionKey key, int count) {
+		conns.get(key).addMessagesRecieved(count);
 	}
 	
-	public void addMessagesSent(int count) {
-		messagesSent.getAndAdd(count);
+	public void addMessagesSent(SelectionKey key, int count) {
+		conns.get(key).addMessagesSent(count);
 	}
 	
-	public void addConnections(int count) {
-		connections.getAndAdd(count);
+	public void addConnections(SelectionKey key) {
+		synchronized(conns) {
+			conns.put(key, new ConnectionStatistics());
+		}
 	}
 	
 	private void resetMessages() {
 		synchronized(this) {
-			messagesRecieved.set(0);
-			messagesSent.set(0);
+			conns.forEach((k,v) -> {
+				v.resetMessages();
+			});
 		}
 	}
 
@@ -36,12 +39,31 @@ public class ServerStatistics implements Runnable{
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			double msgRec = messagesRecieved.doubleValue();
-			double msgSent = messagesSent.doubleValue();
-			double conns = connections.doubleValue();
+			double msgRec = 0.0;
+			double msgSent = 0.0;
+			double connsNumber = conns.size();
+			ArrayList<Double> throughs = new ArrayList<Double>();
+			for(ConnectionStatistics conStat: conns.values()) {
+				double sent = 0.0;
+				double rec = 0.0;
+				synchronized(conStat) {
+					rec = conStat.getMessagesRecieved();
+					sent = conStat.getMessagesSent();
+				}
+				conStat.resetMessages();
+				msgRec += rec;
+				msgSent += sent;
+				double threw = sent/rec;
+				throughs.add(threw);
+			}
+			
 			double through = msgSent/msgRec;
-			double throughPerClient = through/conns;
+			double throughPerClient = through/connsNumber;
 			double std = 0.0;
+			for(double threw:throughs) {
+				std += (through-threw)*(through-threw);
+			}
+			std /= connsNumber;
 			String out = System.currentTimeMillis()+"\t Server Throughput: ";
 			out+=through+" messages/s \t Active Client Connections: ";
 			out+=conns+"\t Mean Per-Client Throughput: "+throughPerClient;

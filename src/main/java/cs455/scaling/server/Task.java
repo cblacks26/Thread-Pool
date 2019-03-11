@@ -42,12 +42,12 @@ public class Task {
 			SocketChannel socket = (SocketChannel)key.channel();
 			socket.read(buffer);
 			this.data = buffer.array();
-			stats.addMessagesRecieved(1);
+			stats.addMessagesRecieved(key,1);
 			String hash = Helper.SHA1FromBytes(data);
 			buffer = ByteBuffer.wrap(hash.getBytes());
 			socket.write(buffer);
 			buffer.clear();
-			stats.addMessagesSent(1);
+			stats.addMessagesSent(key,1);
 		}else {
 			acceptConnection();
 		}
@@ -65,7 +65,7 @@ public class Task {
 					socket.configureBlocking(false);
 					selector.wakeup();
 					socket.register(selector, SelectionKey.OP_READ);
-					stats.addConnections(1);
+					stats.addConnections(key);
 				}
 			} catch (IOException e) {
 				System.out.println("IOException in CommunicationThread accepting a socket: "+e.getStackTrace());
