@@ -27,12 +27,12 @@ public class WorkerThread implements Runnable{
 				try {
 					wait();
 					Task current;
-					while(queue.size()>0) {
+					int sent = 0;
+					while(!queue.isEmpty()) {
 						 current = queue.removeFirst();
 						 current.completeTask();
 					}
 					finishedTask();
-					
 				} catch (InterruptedException e1) {
 					e1.printStackTrace();
 				} catch (NoSuchAlgorithmException e) {
@@ -49,7 +49,6 @@ public class WorkerThread implements Runnable{
 	}
 	
 	private void finishedTask() {
-		System.out.println("Finished Tasks");
 		queue = null;
 		manager.addWorkerThread(this);
 	}
