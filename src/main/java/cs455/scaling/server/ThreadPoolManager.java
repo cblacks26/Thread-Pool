@@ -69,16 +69,18 @@ public class ThreadPoolManager{
 		if(tasks.size()<1) return;
 		// has a queue in tasks
 		LinkedList<Task> queue = tasks.getFirst();
-		if(!workers.isEmpty()) {
-			WorkerThread worker = workers.removeFirst();
-			worker.setTask(queue);
-			synchronized(worker) {
-				worker.notify();
+		synchronized(workers) {
+			if(!workers.isEmpty()) {
+				WorkerThread worker = workers.removeFirst();
+				worker.setTask(queue);
+				synchronized(worker) {
+					worker.notify();
+				}
+				tasks.removeFirst();
+				//System.out.println("Used worker thread\tpool size: "+workers.size());
+				distribute = false;
+				batch = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 			}
-			tasks.removeFirst();
-			System.out.println("Used worker thread\tpool size: "+workers.size());
-			distribute = false;
-			batch = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
 		}
 	}
 	

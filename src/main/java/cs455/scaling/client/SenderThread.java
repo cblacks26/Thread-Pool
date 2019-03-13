@@ -15,6 +15,7 @@ public class SenderThread implements Runnable{
 	private int messageRate = 0;
 	private DataOutputStream dos;
 	private HashMap<String,byte[]> sent = new HashMap<String,byte[]>();
+	
 	private ClientStatistics stats;
 	
 	private SenderThread(DataOutputStream dos, ClientStatistics stats, int messageRate) throws UnknownHostException, IOException {
@@ -30,7 +31,9 @@ public class SenderThread implements Runnable{
 	
 	public void recievedHash(String hash) {
 		stats.addMessagesRecieved(1);
-		if(sent.containsKey(hash)) {
+		if(!sent.containsKey(hash)) {
+			System.out.println("Doesn't have hash: "+hash);
+		}else {
 			sent.remove(hash);
 		}
 	}

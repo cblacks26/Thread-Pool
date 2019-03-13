@@ -58,15 +58,15 @@ public class ServerStatistics implements Runnable{
 			double throughPerClient = through/connsNumber;
 			double std = 0.0;
 			for(double threw:throughs) {
-				std += (through-threw)*(through-threw);
+				std += Math.pow(threw-through, 2);
 			}
 			std /= connsNumber;
+			std = Math.sqrt(std);
 			String out = System.currentTimeMillis()+"\t Server Throughput: ";
 			out+=through+" messages/s \t Active Client Connections: ";
 			out+=connsNumber+"\t Mean Per-Client Throughput: "+throughPerClient;
 			out+=" messages/s Std. Dev. Of Per-Client Throughput:";
 			out+=std+" messages/s";
-			// need per connection info to compute this
 			System.out.println(out);
 			resetMessages();
 		}
